@@ -90,23 +90,30 @@ export const useAdminUpdateProductReviewStatusMutation = () => {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const mutate = useCallback(async ({
-    reviewId,
-    status
-  }: {
-    reviewId: string;
-    status: 'pending' | 'approved' | 'flagged';
-  }) => {
+  const mutate = useCallback(async (
+    {
+      reviewId,
+      status
+    }: {
+      reviewId: string;
+      status: 'pending' | 'approved' | 'flagged';
+    },
+    options?: {
+      onSuccess?: () => void;
+      onError?: (error: Error) => void;
+    }
+  ) => {
     setIsPending(true);
     setError(null);
     try {
       const result = await sdk.admin.productReviews.updateStatus(reviewId, status);
-      // Trigger a page refresh to update the data
-      window.location.reload();
+      options?.onSuccess?.();
       return result;
     } catch (err) {
-      setError(err as Error);
-      throw err;
+      const error = err as Error;
+      setError(error);
+      options?.onError?.(error);
+      throw error;
     } finally {
       setIsPending(false);
     }

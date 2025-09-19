@@ -1,4 +1,4 @@
-import { type MiddlewareRoute, validateAndTransformBody, validateAndTransformQuery } from '@medusajs/framework';
+import { type MiddlewareRoute, validateAndTransformBody, validateAndTransformQuery, MedusaRequest, MedusaResponse, MedusaNextFunction } from '@medusajs/framework';
 import { createFindParams, createOperatorMap } from '@medusajs/medusa/api/utils/validators';
 import { z } from 'zod';
 import { ProductReview } from '../../../modules/product-review/types/common';
@@ -73,6 +73,61 @@ export const defaultStoreReviewsQueryConfig: QueryConfig<ProductReview> = {
   isList: true,
 };
 
+// Middleware to prevent duplicate reviews
+export async function preventDuplicateReviews(
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction
+) {
+  // Only check for POST requests to create reviews
+  if (req.method !== "POST") {
+    return next()
+  }
+
+  const { reviews } = req.body as {
+    reviews?: Array<{
+      order_id?: string
+      order_line_item_id?: string
+    }>
+  }
+
+  if (!reviews || reviews.length === 0) {
+    return next()
+  }
+
+  try {
+    const query = req.scope.resolve("query")
+
+    // Check each review for duplicates
+    for (const review of reviews) {
+      if (review.order_line_item_id && review.order_id) {
+        const { data: existingReviews } = await query.graph({
+          entity: "product_review",
+          filters: {
+            order_line_item_id: review.order_line_item_id,
+            order_id: review.order_id,
+          },
+          fields: ["id"],
+        })
+
+        if (existingReviews && existingReviews.length > 0) {
+          return res.status(409).json({
+            error: "DUPLICATE_REVIEW",
+            message: "You have already submitted a review for this item",
+            order_line_item_id: review.order_line_item_id,
+          })
+        }
+      }
+    }
+
+    next()
+  } catch (error) {
+    console.error("Error checking for duplicate reviews:", error)
+    // Continue with the request even if the check fails
+    next()
+  }
+}
+
 export const storeProductReviewRoutesMiddlewares: MiddlewareRoute[] = [
   {
     matcher: '/store/product-reviews',
@@ -82,6 +137,9 @@ export const storeProductReviewRoutesMiddlewares: MiddlewareRoute[] = [
   {
     matcher: '/store/product-reviews',
     method: 'POST',
-    middlewares: [validateAndTransformBody(upsertProductReviewsSchema)],
+    middlewares: [
+      preventDuplicateReviews,
+      validateAndTransformBody(upsertProductReviewsSchema)
+    ],
   },
 ];

@@ -1,5 +1,67 @@
 # Changelog
 
+## [1.4.1] - 2025-09-19
+
+### Fixed
+- **CRITICAL FIX**: Removed `window.location.reload()` from status update mutation that was causing full page refresh
+- Implemented optimistic updates for instant status change feedback
+- Status updates now use local state management with error rollback
+
+### Changed
+- Status updates now provide instant visual feedback without page refresh
+- Added proper error handling with automatic rollback on failed updates
+
+## [1.4.0] - 2025-09-19
+
+### Changed
+- Status is now clickable in the Status column - click to cycle through approved/pending/flagged
+- Removed redundant status display from Actions column
+- Actions column now only shows view details and add response buttons
+- Fixed page refresh issue when changing status - now uses proper mutation callbacks
+
+### Removed
+- Removed StatusToggle component as it's no longer needed
+- Simplified status management to single-click cycling
+
+### Fixed
+- Fixed unnecessary page refresh when updating review status
+- Status updates now use proper React Query mutations for seamless updates
+
+## [1.3.1] - 2025-09-19
+
+### Changed
+- Removed redundant status column from default table view
+- Status is now only shown in the actions column to avoid duplication
+
+## [1.3.0] - 2025-09-19
+
+### Added
+- New StatusToggle component for intuitive status switching
+- Inline button group for switching between Approved/Pending/Flagged states
+- Visual status indicators with icons (CheckCircle, Clock, XCircle)
+- Tooltips for better UX
+- Compact and full display modes
+
+### Changed
+- Replaced dropdown menu with cleaner inline status toggle
+- Improved accessibility with clear visual states
+- Better user experience for status management
+
+### Removed
+- Removed problematic dropdown menu implementation
+- Removed ActionMenu component in favor of StatusToggle
+
+## [1.2.0] - 2025-09-19
+
+### Added
+- Built-in duplicate review prevention middleware
+- The plugin now handles duplicate review prevention internally
+- No longer requires external middleware for duplicate checks
+
+### Changed
+- Duplicate prevention logic moved from backend to plugin
+- POST /store/product-reviews now includes built-in duplicate validation
+
 ## [1.1.9] - 2025-09-19
 
 ### Fixed

@@ -1,4 +1,4 @@
-import { ChatBubble, CheckCircle, Eye } from '@medusajs/icons';
+import { ChatBubble, Eye, CheckCircle, XCircle, Clock } from '@medusajs/icons';
 import { Button, Table, Badge, Input } from '@medusajs/ui';
 import { DateTime } from 'luxon';
 import React, { useState } from 'react';
@@ -8,8 +8,6 @@ import { ProductReviewDetailsDrawer } from './ProductReviewDetailsDrawer';
 import { Link } from 'react-router-dom';
 import { ReviewStars } from '../atoms/review-stars';
 import { AdminListProductReviewsQuery, AdminProductReview } from '../../sdk/types';
-
-const PRODUCT_REVIEW_STATUSES = ['approved', 'flagged', 'pending'] as const;
 
 interface EnhancedProductReviewDataTableProps {
   query: AdminListProductReviewsQuery;
@@ -29,13 +27,22 @@ export const EnhancedProductReviewDataTable = ({
   const [selectedReview, setSelectedReview] = useState<AdminProductReview | null>(null);
   const [selectedReviewForDetails, setSelectedReviewForDetails] = useState<AdminProductReview | null>(null);
   const [pageInput, setPageInput] = useState<string>(currentPage.toString());
+  const [localReviews, setLocalReviews] = useState<AdminProductReview[]>([]);
+  const [triggerRefresh, setTriggerRefresh] = useState(0);
 
   const { mutate: updateStatus } = useAdminUpdateProductReviewStatusMutation();
   const { data, isLoading } = useAdminListProductReviews(query);
 
-  const reviews = data?.product_reviews || [];
+  const reviews = localReviews.length > 0 ? localReviews : data?.product_reviews || [];
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Update local reviews when data changes
+  React.useEffect(() => {
+    if (data?.product_reviews) {
+      setLocalReviews(data.product_reviews);
+    }
+  }, [data?.product_reviews]);
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -69,16 +76,74 @@ export const EnhancedProductReviewDataTable = ({
     setPageInput(currentPage.toString());
   }, [currentPage]);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return CheckCircle;
+      case 'pending':
+        return Clock;
+      case 'flagged':
+        return XCircle;
+      default:
+        return Clock;
+    }
+  };
+
+  const getNextStatus = (currentStatus: string): string => {
+    const statusCycle = {
+      approved: 'pending',
+      pending: 'flagged',
+      flagged: 'approved'
+    };
+    return statusCycle[currentStatus as keyof typeof statusCycle] || 'pending';
+  };
+
+  const getStatusBadge = (review: AdminProductReview) => {
     const colors = {
       approved: 'green',
       pending: 'orange',
       flagged: 'red'
     };
+    const Icon = getStatusIcon(review.status);
+
     return (
-      <Badge color={colors[status as keyof typeof colors] || 'grey'} size="small">
-        {status}
-      </Badge>
+      <Button
+        variant="transparent"
+        size="small"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const nextStatus = getNextStatus(review.status);
+
+          // Update local state immediately for instant feedback
+          setLocalReviews(prevReviews =>
+            prevReviews.map(r =>
+              r.id === review.id ? { ...r, status: nextStatus } : r
+            )
+          );
+
+          // Then update the backend
+          updateStatus({ reviewId: review.id, status: nextStatus }, {
+            onSuccess: () => {
+              // Status update successful - local state already updated
+            },
+            onError: () => {
+              // Revert the optimistic update on error
+              setLocalReviews(prevReviews =>
+                prevReviews.map(r =>
+                  r.id === review.id ? { ...r, status: review.status } : r
+                )
+              );
+            }
+          });
+        }}
+        className="flex items-center gap-1 hover:bg-ui-bg-subtle rounded px-2 py-1"
+      >
+        <Icon className="h-4 w-4" />
+        <Badge color={colors[review.status as keyof typeof colors] || 'grey'} size="small">
+          {review.status}
+        </Badge>
+      </Button>
     );
   };
 
@@ -150,7 +215,7 @@ export const EnhancedProductReviewDataTable = ({
 
                   {showColumns.includes('status') && (
                     <Table.Cell>
-                      {getStatusBadge(review.status)}
+                      {getStatusBadge(review)}
                     </Table.Cell>
                   )}
 
@@ -197,6 +262,7 @@ export const EnhancedProductReviewDataTable = ({
                           variant="transparent"
                           size="small"
                           onClick={() => setSelectedReviewForDetails(review)}
+                          title="View details"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -204,30 +270,10 @@ export const EnhancedProductReviewDataTable = ({
                           variant="transparent"
                           size="small"
                           onClick={() => setSelectedReview(review)}
+                          title="Add response"
                         >
                           <ChatBubble className="h-4 w-4" />
                         </Button>
-                        <div className="relative group">
-                          <Button
-                            variant="transparent"
-                            size="small"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
-                          <div className="absolute right-0 mt-1 w-40 rounded-md shadow-lg bg-ui-bg-base ring-1 ring-ui-border-base opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                            <div className="py-1">
-                              {PRODUCT_REVIEW_STATUSES.filter(s => s !== review.status).map((status) => (
-                                <button
-                                  key={status}
-                                  onClick={() => updateStatus({ reviewId: review.id, status })}
-                                  className="block w-full text-left px-4 py-2 text-sm hover:bg-ui-bg-subtle"
-                                >
-                                  Mark as {status}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </Table.Cell>
                   )}
