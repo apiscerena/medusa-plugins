@@ -12,7 +12,7 @@ export const listStoreProductReviewsQuerySchema = createFindParams({
 }).merge(
   z.object({
     id: z.union([z.string(), z.array(z.string())]).optional(),
-    status: z.union([reviewStatuses, z.array(reviewStatuses)]).default('approved').optional(),
+    status: z.union([reviewStatuses, z.array(reviewStatuses)]).optional(),
     product_id: z.union([z.string(), z.array(z.string())]).optional(),
     order_id: z.union([z.string(), z.array(z.string())]).optional(),
     rating: z.union([z.number().max(5).min(1), z.array(z.number().max(5).min(1))]).optional(),
@@ -39,6 +39,7 @@ export const defaultStoreProductReviewFields = [
   'id',
   'status',
   'product_id',
+  'variant_id',  // Added to include variant_id by default
   'name',
   'rating',
   'content',
@@ -46,12 +47,14 @@ export const defaultStoreProductReviewFields = [
   'updated_at',
   'response.*',
   'images.*'
+  // Removed variant relation fields - link not working yet
 ];
 
 export const allowedStoreProductReviewFields = [
   'id',
   'status',
   'product_id',
+  'variant_id',  // Allow variant_id in queries
   'name',
   'rating',
   'content',
@@ -60,6 +63,7 @@ export const allowedStoreProductReviewFields = [
   'response',
   'images',
   'product.*'
+  // Note: variant.* removed as relation isn't set up yet - using variant_sku enrichment instead
 ];
 
 export const defaultStoreReviewsQueryConfig: QueryConfig<ProductReview> = {

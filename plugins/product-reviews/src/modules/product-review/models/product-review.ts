@@ -11,6 +11,7 @@ export const ProductReviewModel = model
     content: model.text().searchable().nullable(),
     order_line_item_id: model.text().nullable(),
     product_id: model.text().nullable(),
+    variant_id: model.text().nullable(), // Added to track which variant was reviewed
     order_id: model.text().nullable(),
     images: model.hasMany(() => ProductReviewImageModel),
     response: model.hasOne(() => ProductReviewResponseModel, { nullable: true }).nullable(),
@@ -25,5 +26,8 @@ export const ProductReviewModel = model
     },
     {
       on: ['order_line_item_id'],
+    },
+    {
+      on: ['variant_id'], // Added index for variant queries
     },
   ]);

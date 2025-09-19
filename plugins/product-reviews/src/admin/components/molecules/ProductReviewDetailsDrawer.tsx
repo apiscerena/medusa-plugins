@@ -1,4 +1,4 @@
-import type { AdminProductReview } from '@lambdacurry/medusa-plugins-sdk';
+import type { AdminProductReview } from '../../sdk/types';
 import { Button, Drawer, Text } from '@medusajs/ui';
 import { DateTime } from 'luxon';
 import { Link } from 'react-router-dom';
@@ -25,7 +25,7 @@ export const ProductReviewDetailsDrawer = ({
           alt={review.product.title}
         />
       ) : (
-        <div className="h-12 w-12 flex-shrink-0 rounded-md bg-gray-200" />
+        <div className="h-12 w-12 flex-shrink-0 rounded-md bg-ui-bg-subtle" />
       )}
       <Link to={`/products/${review.product.id}`}>
         <Text className="hover:underline">{review.product.title}</Text>

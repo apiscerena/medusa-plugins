@@ -2,7 +2,7 @@ import { ChatBubble, CheckCircle, Eye } from '@medusajs/icons';
 import { DataTable, Heading, createDataTableColumnHelper, useDataTable } from '@medusajs/ui';
 import { DateTime } from 'luxon';
 import { useState } from 'react';
-import { useAdminListProductReviews, useAdminUpdateProductReviewStatusMutation } from '../hooks/product-review';
+import { useAdminListProductReviews, useAdminUpdateProductReviewStatusMutation } from '../../hooks/product-review';
 import { ProductReviewResponseDrawer } from './ProductReviewResponseDrawer';
 import { ProductReviewDetailsDrawer } from './ProductReviewDetailsDrawer';
 import { Link } from 'react-router-dom';
@@ -34,17 +34,20 @@ const getColumns = (
       enableSorting: false,
       cell: ({ row }) => {
         const product = row.original.product;
+        if (!product) {
+          return <span className="text-ui-fg-muted">N/A</span>;
+        }
         return (
           <div className="flex items-center gap-4 py-2 w-full min-w-[200px] max-w-[300px]">
             {product.thumbnail ? (
               <img className="h-8 w-8 flex-shrink-0 rounded-md my-1" src={product.thumbnail} alt={product.title} />
             ) : (
-              <div className="h-8 w-8 flex-shrink-0 rounded-md bg-gray-200" />
+              <div className="h-8 w-8 flex-shrink-0 rounded-md bg-ui-bg-subtle" />
             )}
             <div className="flex-1 min-w-0">
               <Link to={`/products/${product.id}`}>
                 <span className="text-sm whitespace-normal break-words hover:underline line-clamp-3">
-                  {product.title}
+                  {product.title || 'Unknown Product'}
                 </span>
               </Link>
             </div>
@@ -57,10 +60,14 @@ const getColumns = (
       header: 'Order',
       enableSorting: false,
       cell: ({ row }) => {
+        const order = row.original.order;
+        if (!order) {
+          return <span className="text-ui-fg-muted">N/A</span>;
+        }
         return (
-          <Link to={`/orders/${row.original.order.id}`}>
+          <Link to={`/orders/${order.id}`}>
             <span className="text-sm whitespace-normal break-words hover:underline">
-              #{row.original.order.display_id}
+              #{order.display_id || order.id}
             </span>
           </Link>
         );
@@ -108,7 +115,7 @@ const getColumns = (
         return (
           <div className="flex flex-col gap-2 my-2 min-w-[200px] max-w-[400px]">
             <ReviewStars rating={rating} />
-            <p className="text-gray-700 whitespace-normal break-words line-clamp-3">{content}</p>
+            <p className="whitespace-normal break-words line-clamp-3">{content}</p>
           </div>
         );
       },
@@ -118,7 +125,8 @@ const getColumns = (
       header: 'Images',
       enableSorting: false,
       cell: ({ row }) => {
-        return <div className="flex gap-2">{row.original.images.length}</div>;
+        const images = row.original.images || [];
+        return <div className="flex gap-2">{images.length}</div>;
       },
     }),
     columnHelper.accessor('response', {
@@ -130,13 +138,13 @@ const getColumns = (
         if (!content) {
           return (
             <div className="min-w-[160px] max-w-[300px]">
-              <span className="text-gray-400">No response</span>
+              <span className="text-ui-fg-muted">No response</span>
             </div>
           );
         }
         return (
           <div className="flex flex-col gap-2 my-2 min-w-[160px] max-w-[300px]">
-            <p className="text-gray-700 whitespace-normal break-words line-clamp-3">{content}</p>
+            <p className="whitespace-normal break-words line-clamp-3">{content}</p>
           </div>
         );
       },

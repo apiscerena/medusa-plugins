@@ -81,6 +81,7 @@ export const upsertProductReviewsWorkflow = createWorkflow(
             email: order.email,
             name: getNameFromOrder(order),
             product_id: lineItem.product_id,
+            variant_id: lineItem.variant_id,
             order_id: review.order_id,
             order_line_item_id: review.order_line_item_id,
             rating: review.rating,

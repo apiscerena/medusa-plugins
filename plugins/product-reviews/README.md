@@ -1,17 +1,28 @@
-# @lambdacurry/medusa-product-reviews
+# @nakamotosbutt/medusa-product-reviews-enhanced
 
-A plugin that adds product review and moderation capabilities to your Medusa application, with built-in admin responses and review statistics.
+An enhanced plugin that adds comprehensive product review and moderation capabilities to your Medusa application, with advanced filtering, pagination, and admin UI integration.
 
-> This plugin is part of the [Medusa Plugins Collection](https://github.com/lambda-curry/medusa-plugins).
+> Enhanced version with improved admin UI, filtering capabilities, and better integration with Medusa v2.
 
 ## Features
 > See a demo in our [Medusa Starter](https://github.com/lambda-curry/medusa2-starter)
 
-- Product reviews with ratings
+- Product reviews with ratings (1-5 stars)
 - Review statistics and analytics
 - Review moderation workflow (`approved`/`pending`/`flagged`)
 - Admin response management
 - SDK for Store and Admin operations
+- **Enhanced Admin UI** with:
+  - Advanced filtering (product, status, rating, date range, search)
+  - Pagination with customizable page size
+  - Direct page navigation
+  - Bulk operations support
+  - Dark theme integration with Medusa UI
+- **Improved API** with:
+  - Full-text search across reviews
+  - Date range filtering
+  - Rating-based filtering
+  - Product-specific filtering
 
 ## Prerequisites
 

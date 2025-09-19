@@ -8,8 +8,6 @@ import {
   ProductReviewStatsModel,
 } from './models';
 import { ProductReviewStats } from './types';
-import { z } from 'zod';
-
 interface CalculatedProductReviewStats {
   product_id: string;
   review_count: number;
@@ -21,13 +19,9 @@ interface CalculatedProductReviewStats {
   rating_count_5: number;
 }
 
-export const modduleOptionsSchema = z.object({
-  defaultReviewStatus: z.enum(['pending', 'approved', 'flagged']).default('approved'),
-}).default({
-  defaultReviewStatus: 'approved',
-});
-
-export type ModuleOptions = z.infer<typeof modduleOptionsSchema>;
+export interface ModuleOptions {
+  defaultReviewStatus?: 'pending' | 'approved' | 'flagged';
+}
 
 class ProductReviewService extends MedusaService({
   ProductReview: ProductReviewModel,
@@ -40,13 +34,13 @@ class ProductReviewService extends MedusaService({
   constructor(container, options: ModuleOptions) {
     super(container, options);
 
-    const { defaultReviewStatus } = modduleOptionsSchema.parse(options);
-
-    this.defaultReviewStatus = defaultReviewStatus;
+    this.defaultReviewStatus = options?.defaultReviewStatus || 'approved';
   }
 
   async refreshProductReviewStats(productIds: string[], sharedContext?: Context): Promise<ProductReviewStats[]> {
-    const foundStats = await this.listProductReviewStats({ product_id: productIds }, {});
+    // MedusaService generates methods without 'es' suffix at runtime
+    const service = this as any;
+    const foundStats = await service.listProductReviewStats({ product_id: productIds });
 
     const calculatedStats = await this.calculateProductReviewStats(
       foundStats.map((s) => s.product_id),
@@ -58,7 +52,7 @@ class ProductReviewService extends MedusaService({
       ...calculatedStats.find((c) => c.product_id === s.product_id),
     }));
 
-    const upsertedStats = await this.updateProductReviewStats(toUpdate);
+    const upsertedStats = await service.updateProductReviewStats(toUpdate);
 
     return upsertedStats;
   }
@@ -68,10 +62,10 @@ class ProductReviewService extends MedusaService({
     productIds: string[],
     @MedusaContext() sharedContext: Context<EntityManager> & { manager: EntityManager },
   ): Promise<CalculatedProductReviewStats[]> {
-    const SQL = `SELECT 
+    const SQL = `SELECT
     product_id,
-    COUNT(*) AS review_count, 
-    CAST(AVG(rating) AS DECIMAL(10, 2)) AS average_rating,
+    COUNT(*) AS review_count,
+    AVG(rating::numeric) AS average_rating,
     SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS rating_count_1,
     SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS rating_count_2,
     SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS rating_count_3,

@@ -1,4 +1,4 @@
-import type { AdminProductReview } from '@lambdacurry/medusa-plugins-sdk';
+import type { AdminProductReview } from '../../sdk/types';
 import { Button, Label, Text, Textarea } from '@medusajs/ui';
 import { useForm } from 'react-hook-form';
 // import { zodResolver } from '@hookform/resolvers';
@@ -8,7 +8,7 @@ import { Drawer } from '@medusajs/ui';
 import {
   useAdminCreateProductReviewResponseMutation,
   useAdminUpdateProductReviewResponseMutation,
-} from '../hooks/product-review';
+} from '../../hooks/product-review';
 
 const schema = z.object({
   content: z
@@ -62,7 +62,7 @@ export const ProductReviewResponseDrawer = ({
               <Label className="font-medium">Response</Label>
               <Textarea placeholder="Write your response..." rows={4} {...form.register('content')} />
               {form.formState.errors.content && (
-                <Text className="text-red-500" size="small">
+                <Text className="text-ui-fg-error" size="small">
                   {form.formState.errors.content.message}
                 </Text>
               )}

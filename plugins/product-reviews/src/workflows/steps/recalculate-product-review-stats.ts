@@ -8,8 +8,10 @@ export const recalculateProductReviewStatsStep = createStep(
   recalculateProductReviewStatsStepId,
   async (productIds: string[], { container }) => {
     const productReviewService = container.resolve<ProductReviewService>(PRODUCT_REVIEW_MODULE);
+    // MedusaService generates methods without 'es' suffix at runtime
+    const service = productReviewService as any;
 
-    const stats = await productReviewService.listProductReviewStats({
+    const stats = await service.listProductReviewStats({
       product_id: productIds,
     });
 
